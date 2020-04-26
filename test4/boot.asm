@@ -7,7 +7,7 @@
 %define IDE_CYLINDER_HIGH 0x1f5
 %define IDE_SDH           0x1f6
 %define IDE_STATUS        0x1f7
-%define IDE_COMMAND        0x1f7
+%define IDE_COMMAND       0x1f7
 %define IDE_ALT_STATUS    0x3f6
 %define IDE_DIGITAL_OUT   0x3f6
 %define IDE_DRIVE_ADDR    0x3f7
@@ -31,6 +31,7 @@ real_mode_start:
     mov es, ax
     mov ss, ax
     mov sp, 0x7c00
+
 
     mov dx, IDE_SECTOR_COUNT
     mov al, 1 
@@ -69,6 +70,7 @@ real_mode_start:
     in ax, dx
     stosw 
     loop .read_ide
+
 
     jmp sector_1_start
 
