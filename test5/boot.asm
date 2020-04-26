@@ -74,6 +74,12 @@ protected_mode_start:
     call read_sector
     add esp, 8
 
+    push 0 ; offset
+    push 4096; num_of_bytes
+    push 0x1000
+    call read_segment
+    add esp, 12
+
     jmp sector_1_start
 
 .hang:
@@ -176,6 +182,67 @@ read_sector:
     pop ecx
     pop edx
     pop eax
+    pop ebp
+    ret
+
+
+; void read_segment(uchar *phys_addr, uint num_of_bytes, uint offset) 
+;     * some documentation
+; Stack:
+;     ebp + 16 -> phys_addr
+;     ebp + 12 -> num_of_bytes 
+;     ebp + 8  -> offset 
+;     ebp + 4  -> return_addr
+;     ebp      -> old_ebp
+;
+read_segment:
+    push ebp
+    mov ebp, esp
+
+    push eax
+    push ebx
+    push ecx
+    push ebx
+ 
+    ; phys_addr     -> eax
+    ; end_phys_addr -> ebx
+    ; offset        -> ecx 
+    mov eax, [ebp + 16]
+    
+    ; IMPORTANT(max): assert(SECTOR_SIZE is a power of 2)
+    ; x % y = x & (y - 1)
+    ; Round down phys_addr to a sector boundary 
+    mov edx, [ebp + 8]
+    and edx, (SECTOR_SIZE - 1)
+    sub eax, edx 
+
+    ; translate offset in bytes to offset in sectors
+    mov ecx, [ebp + 8]
+    shr ecx, SECTOR_SIZE
+    inc ecx
+
+    mov ebx, [ebp + 16]
+    add ebx, [ebp + 12]
+
+.load_sectors:
+    cmp eax, ebx
+    jge .done
+    
+    push ecx
+    push eax
+    call read_sector
+    add esp, 8
+
+    add eax, SECTOR_SIZE
+    inc ecx
+    jmp .load_sectors
+
+.done: 
+    ; eax ebx ecx edx 
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax 
     pop ebp
     ret
 
