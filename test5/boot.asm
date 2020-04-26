@@ -6,10 +6,6 @@ BITS 16
 first_instruction:
     jmp real_mode_start
 
-align 4
-pm_data: dd 0xdeadbeef
-pm_msg:  db "Welcome to protected mode!", 0
-
 align 8
 gdt_start:
     gdt_null_seg_descr: 
@@ -46,6 +42,9 @@ real_mode_start:
     mov ss, ax
     mov sp, 0x7c00
 
+    ; TODO(max): activate A20 gate so that we will not be a memory
+    ;            address wrapping
+
     lgdt [gdt_descr]
 
     mov eax, cr0
@@ -65,24 +64,144 @@ protected_mode_start:
     mov fs, ax
     mov gs, ax
 
-    mov edi, 0xb8000
-    mov esi, pm_msg
-.print_str:
-    lodsb
-    or al, al
-    jz .print_str_end
-    mov byte [edi], al
-    mov byte [edi + 1], 0b00000100
-    add edi, 2
-    jmp .print_str  
-.print_str_end: 
+    mov esp, 0x07c00
+    mov ebp , esp
 
-    mov eax, [pm_data]    
+    ; TODO(max): read kernel in elf format into memory
+
+    push 1              ; sector_num
+    push (0x7c00 + 512) ; dest 
+    call read_sector
+    add esp, 8
+
+    jmp sector_1_start
 
 .hang:
     jmp .hang
 
-c_code:
 
-;times 510 - ($-$$) db 0
-;dw 0xaa55
+%define SECTOR_SIZE 512
+
+%define IDE_DATA          0x1f0
+%define IDE_ERROR         0x1f1
+%define IDE_SECTOR_COUNT  0x1f2
+%define IDE_SECTOR_NUM    0x1f3
+%define IDE_CYLINDER_LOW  0x1f4
+%define IDE_CYLINDER_HIGH 0x1f5
+%define IDE_SDH           0x1f6
+%define IDE_STATUS        0x1f7
+%define IDE_COMMAND       0x1f7
+%define IDE_ALT_STATUS    0x3f6
+%define IDE_DIGITAL_OUT   0x3f6
+%define IDE_DRIVE_ADDR    0x3f7
+
+%define IDE_STATUS_BUSY                (1 << 7)
+%define IDE_STATUS_DRIVE_READY         (1 << 6)
+%define IDE_STATUS_WRITE_FAULT         (1 << 5)
+%define IDE_STATUS_DRIVE_SEEK_COMPLETE (1 << 4)
+%define IDE_STATUS_DATA_REQUEST        (1 << 3)
+%define IDE_STATUS_CORRECTABLE_DATA    (1 << 2)
+%define IDE_STATUS_INDEX               (1 << 1)
+%define IDE_STATUS_ERROR               (1)
+
+; void read_sector(void *dest, uint sector_num);
+; * Reads a single sector from the ide hard drive into
+; * specified memory location (dest)
+;
+; Stack:
+;     ebp + 12 -> sector_num
+;     ebp + 8  -> dest
+;     ebp + 4  -> return_addr
+;     ebp      -> old_ebp
+read_sector:
+    push ebp
+    mov ebp, esp
+
+    push eax
+    push edx
+    push ecx
+    push edi
+
+    mov dx, IDE_STATUS
+.wait_disk_0: 
+    in al, dx
+    and al, 0xc0
+    cmp al, IDE_STATUS_DRIVE_READY
+    jne .wait_disk_0 
+
+    mov dx, IDE_SECTOR_COUNT
+    mov al, 1 
+
+    mov dx, IDE_SECTOR_NUM
+    mov eax, dword [ebp + 12] 
+    out dx, al
+
+    mov dx, IDE_CYLINDER_LOW 
+    mov eax, dword [ebp + 12]
+    shr eax, 8
+    out dx, al
+
+    mov dx, IDE_CYLINDER_HIGH
+    mov eax, dword [ebp + 12]
+    shr eax, 16
+    out dx, al
+
+    mov dx, IDE_SDH
+    mov eax, dword [ebp + 12]
+    shr eax, 24
+    or al, 0xe0
+    out dx, al
+
+    mov dx, IDE_COMMAND
+    mov al, 0x20
+    out dx, al
+
+    mov dx, IDE_STATUS
+.wait_disk_1: 
+    in al, dx
+    and al, 0xc0
+    cmp al, IDE_STATUS_DRIVE_READY
+    jne .wait_disk_1
+
+    ; TODO(max): maybe replace loop with a single instruction (rep stosw)
+    mov dx, IDE_DATA
+    mov cx, (SECTOR_SIZE / 2)
+    mov edi, [ebp + 8]
+.read_ide:
+    in ax, dx
+    stosw
+    loop .read_ide
+
+    pop edi
+    pop ecx
+    pop edx
+    pop eax
+    pop ebp
+    ret
+
+
+times 510 - ($-$$) db 0
+dw 0xaa55
+
+;---------------------------------SECTOR_1-------------------------------
+sector_1_start:
+
+    mov eax, 0xdeadbeef
+    mov ebx, 0xdeadbeef
+    mov ecx, 0xdeadbeef
+    mov edx, 0xdeadbeef
+
+.hang:
+    jmp .hang
+
+times 1024 - ($-$$) db 0
+
+
+
+
+
+
+
+
+
+
