@@ -74,19 +74,18 @@ protected_mode_start:
     call read_sector
     add esp, 8
 
-    push 0 ; offset
-    push 4096; num_of_bytes
-    push 0x1000
+    push 0      ; offset
+    push 4096   ; num_of_bytes
+    push 0x1000 ; phys_addr
     call read_segment
     add esp, 12
-
-    jmp sector_1_start
 
 .hang:
     jmp .hang
 
 
-%define SECTOR_SIZE 512
+%define LOG2_SECTOR_SIZE 9
+%define SECTOR_SIZE (1 << LOG2_SECTOR_SIZE)
 
 %define IDE_DATA          0x1f0
 %define IDE_ERROR         0x1f1
@@ -189,9 +188,9 @@ read_sector:
 ; void read_segment(uchar *phys_addr, uint num_of_bytes, uint offset) 
 ;     * some documentation
 ; Stack:
-;     ebp + 16 -> phys_addr
+;     ebp + 16 -> offset
 ;     ebp + 12 -> num_of_bytes 
-;     ebp + 8  -> offset 
+;     ebp + 8  -> phys_addr 
 ;     ebp + 4  -> return_addr
 ;     ebp      -> old_ebp
 ;
@@ -207,21 +206,21 @@ read_segment:
     ; phys_addr     -> eax
     ; end_phys_addr -> ebx
     ; offset        -> ecx 
-    mov eax, [ebp + 16]
+    mov eax, [ebp + 8]
     
     ; IMPORTANT(max): assert(SECTOR_SIZE is a power of 2)
     ; x % y = x & (y - 1)
     ; Round down phys_addr to a sector boundary 
-    mov edx, [ebp + 8]
+    mov edx, [ebp + 16]
     and edx, (SECTOR_SIZE - 1)
     sub eax, edx 
 
     ; translate offset in bytes to offset in sectors
-    mov ecx, [ebp + 8]
-    shr ecx, SECTOR_SIZE
+    mov ecx, [ebp + 16]
+    shr ecx, LOG2_SECTOR_SIZE 
     inc ecx
 
-    mov ebx, [ebp + 16]
+    mov ebx, [ebp + 8]
     add ebx, [ebp + 12]
 
 .load_sectors:
@@ -249,20 +248,6 @@ read_segment:
 
 times 510 - ($-$$) db 0
 dw 0xaa55
-
-;---------------------------------SECTOR_1-------------------------------
-sector_1_start:
-
-    mov eax, 0xdeadbeef
-    mov ebx, 0xdeadbeef
-    mov ecx, 0xdeadbeef
-    mov edx, 0xdeadbeef
-
-.hang:
-    jmp .hang
-
-times 1024 - ($-$$) db 0
-
 
 
 
