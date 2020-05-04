@@ -69,10 +69,10 @@ protected_mode_start:
 
     ; TODO(max): read kernel in elf format into memory
 
-    push 1              ; sector_num
-    push (0x7c00 + 512) ; dest 
-    call read_sector
-    add esp, 8
+    ;push 1              ; sector_num
+    ;push (0x1000) ; dest 
+    ;call read_sector
+    ;add esp, 8
 
     push 0      ; offset
     push 4096   ; num_of_bytes
@@ -201,7 +201,7 @@ read_segment:
     push eax
     push ebx
     push ecx
-    push ebx
+    push edx
  
     ; phys_addr     -> eax
     ; end_phys_addr -> ebx
@@ -237,7 +237,6 @@ read_segment:
     jmp .load_sectors
 
 .done: 
-    ; eax ebx ecx edx 
     pop edx
     pop ecx
     pop ebx
