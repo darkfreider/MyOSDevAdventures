@@ -32,6 +32,9 @@ gdt_descr:
 gdt_descr_limit:     dw (gdt_end - gdt_start - 1) ;TODO(max): I need to check whether I need to do (-1) part, (I think I really need to do this, seen something about segmen limits in intel's manuals, BUT GDT is not a segmen (i think)
 gdt_descr_base_addr: dd gdt_start
 
+%define PS2_DATA    0x60
+%define PS2_STATUS  0x64
+%define PS2_COMMAND 0x64
 
 real_mode_start:
     cli
@@ -42,8 +45,22 @@ real_mode_start:
     mov ss, ax
     mov sp, 0x7c00
 
-    ; TODO(max): activate A20 gate so that we will not be a memory
-    ;            address wrapping
+    ; NOTE(max): Disabling A20 line (no address wraparound)
+.kbd_wait_0: 
+    in al, PS2_STATUS 
+    test al, 0x02
+    jnz .kbd_wait_0
+
+    mov al, 0xd1 ; NOTE(max): write to cntrlr output port
+    out PS2_COMMAND, al
+
+.kbd_wait_1: 
+    in al, PS2_STATUS 
+    test al, 0x02
+    jnz .kbd_wait_1
+
+    mov al, 0xdf
+    out PS2_DATA, al
 
     lgdt [gdt_descr]
 
@@ -64,22 +81,76 @@ protected_mode_start:
     mov fs, ax
     mov gs, ax
 
-    mov esp, 0x07c00
+    mov esp, 0x7c00
     mov ebp , esp
 
     ; TODO(max): read kernel in elf format into memory
-
-    ;push 1              ; sector_num
-    ;push (0x1000) ; dest 
-    ;call read_sector
-    ;add esp, 8
-
+    ; TODO(max): setup proper kernel stack instead of temporrary stack at 0x7c00
     push 0      ; offset
     push 4096   ; num_of_bytes
     push 0x1000 ; phys_addr
     call read_segment
     add esp, 12
 
+%define ELF_MAGIC 0
+%define ELF_ENTRY 24
+%define ELF_PHOFF 28
+%define ELF_PHNUM 44
+%define SIZEOF_PROGHDR 32
+%define LOG2_SIZEOF_PROGHDR 5
+%define PHDR_PADDR 12
+%define PHDR_FILESZ 16
+%define PHDR_OFF 4
+%define PHDR_MEMSZ 20
+
+    ; ph, eax
+    ; phe ebx
+    ; elf ecx
+    ; pa  edx 
+
+    mov ecx, 0x1000
+   
+    mov eax, ecx 
+    add eax, ELF_PHOFF
+   
+    mov ebx, [ecx + ELF_PHNUM] 
+    shl ebx, LOG2_SIZEOF_PROGHDR
+    add ebx, eax 
+
+.load_kernel_loop:
+    cmp eax, ebx
+    jnl .call_kernel_entry
+   
+    mov edx, eax
+    add edx, PHDR_PADDR
+
+    push dword [eax + PHDR_OFF]
+    push dword [eax + PHDR_FILESZ]
+    push edx
+    call read_segment
+    add esp, 12
+
+    ; use ecx as rep stos counter
+    mov ecx, [eax + PHDR_MEMSZ]
+    cmp ecx, [eax + PHDR_FILESZ]
+    jng .l1
+    
+    mov edi, edx
+    add edi, [eax + PHDR_FILESZ]
+    sub ecx, [eax + PHDR_FILESZ]
+    
+    push eax
+    xor eax, eax   
+    rep stosb 
+    pop eax 
+ 
+.l1: 
+    add eax, SIZEOF_PROGHDR
+    jmp .load_kernel_loop
+
+.call_kernel_entry:
+    mov eax, [0x1000 + ELF_ENTRY]
+    
 .hang:
     jmp .hang
 

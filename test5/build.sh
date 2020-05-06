@@ -11,3 +11,4 @@ i686-elf-gcc kmain.c -o kmain -std=c99 -ffreestanding -nostdlib -O0 -Wall -Wextr
 ./make_img
 
 qemu-system-i386 -monitor stdio -drive format=raw,file=disk_image.bin
+
