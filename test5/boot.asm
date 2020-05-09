@@ -106,14 +106,14 @@ protected_mode_start:
     ; ph, eax
     ; phe ebx
     ; elf ecx
-    ; pa  edx 
+    ; pa  edx
 
     mov ecx, 0x1000
    
     mov eax, ecx 
-    add eax, ELF_PHOFF
-   
-    mov ebx, [ecx + ELF_PHNUM] 
+    add eax, dword [ecx + ELF_PHOFF]
+  
+    movzx ebx, word [ecx + ELF_PHNUM] 
     shl ebx, LOG2_SIZEOF_PROGHDR
     add ebx, eax 
 
@@ -121,8 +121,7 @@ protected_mode_start:
     cmp eax, ebx
     jnl .call_kernel_entry
    
-    mov edx, eax
-    add edx, PHDR_PADDR
+    mov edx, dword [eax + PHDR_PADDR]
 
     push dword [eax + PHDR_OFF]
     push dword [eax + PHDR_FILESZ]
@@ -131,13 +130,13 @@ protected_mode_start:
     add esp, 12
 
     ; use ecx as rep stos counter
-    mov ecx, [eax + PHDR_MEMSZ]
-    cmp ecx, [eax + PHDR_FILESZ]
+    mov ecx, dword [eax + PHDR_MEMSZ]
+    cmp ecx, dword [eax + PHDR_FILESZ]
     jng .l1
     
     mov edi, edx
-    add edi, [eax + PHDR_FILESZ]
-    sub ecx, [eax + PHDR_FILESZ]
+    add edi, dword [eax + PHDR_FILESZ]
+    sub ecx, dword [eax + PHDR_FILESZ]
     
     push eax
     xor eax, eax   
@@ -149,8 +148,8 @@ protected_mode_start:
     jmp .load_kernel_loop
 
 .call_kernel_entry:
-    mov eax, [0x1000 + ELF_ENTRY]
-    
+    mov eax, dword [0x1000 + ELF_ENTRY]
+    jmp eax 
 .hang:
     jmp .hang
 
