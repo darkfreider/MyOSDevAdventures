@@ -25,9 +25,9 @@ off_t fsize(const char *filename)
 
 int main(void)
 {
-    FILE *boot_bin   = fopen("boot.bin", "r");
-    FILE *kmain      = fopen("kmain", "r");    
-    FILE *disk_image = fopen("disk_image.bin", "w");
+    FILE *boot_bin   = fopen("boot.bin", "rb");
+    FILE *kmain      = fopen("kmain", "rb");    
+    FILE *disk_image = fopen("disk_image.img", "wb");
     
     static char bootloader[SECTOR_SIZE];
     fread(bootloader, SECTOR_SIZE, 1,  boot_bin);

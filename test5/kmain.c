@@ -7,11 +7,26 @@
 #error "This should be compiled with ix86 compiler"
 #endif
 
-char g_attr = 0x07;
+char g_attr = 0x27;
 
-void print_message(const char *msg, char attr)
+int arr[4] = {0xdeadbeef, 0xbeefdead, 0xdeaddead, 0xbeefbeef};
+
+void clear_screen(void)
 {
-    volatile char *video = (volatile char *)0xb8000; 
+    int len = 80 * 25;
+
+    volatile short *video = (volatile short *)0xb8000;
+    while (len-- > 0)
+    {
+        *video++ = 0;
+    }
+}
+
+void print_message(const char *msg, char attr, int x, int y)
+{
+    volatile char *video = (volatile char *)0xb8000;
+
+    video += 2 * (y * 80 + x); 
     while (*msg)
     {
        *video++ = *msg++;
@@ -20,19 +35,43 @@ void print_message(const char *msg, char attr)
 
 }
 
+void print_hex(int h)
+{
+    char *hex_to_char = "0123456789abcdef";
+    char out[] = "0x00000000 ";
+
+    out[2] = hex_to_char[(h >> 28) & 0xf];
+    out[3] = hex_to_char[(h >> 24) & 0xf];
+
+    out[4] = hex_to_char[(h >> 20) & 0xf];
+    out[5] = hex_to_char[(h >> 16) & 0xf];
+
+    out[6] = hex_to_char[(h >> 12) & 0xf];
+    out[7] = hex_to_char[(h >> 8) & 0xf];
+    
+    out[8] = hex_to_char[(h >> 4) & 0xf];
+    out[9] = hex_to_char[(h >> 0) & 0xf];
+
+    print_message(out, g_attr, 0, 0);
+}
+
+char *msg[] = { 
+    "hello", 
+    "world",
+    "c kernel",
+    "works!",
+    "Holy shit! I've found this error!!!!"
+};
+
 
 int _start(void)
 {
-char *msg[] = {
-    "                     works!",
-    "            c kernel ",
-    "      world ",
-    "hello ", 
+    clear_screen();
 
-};
+    for (int i = 0; i < 5; i++)
+	    print_message(msg[i], g_attr, 0, i);
+ 
 
-    for (int i = 0; i < 4; i++)
-	    print_message(msg[i], 0x07);
 
     for (;;);
     return (0);

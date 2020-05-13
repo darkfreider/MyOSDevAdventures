@@ -6,6 +6,8 @@ BITS 16
 first_instruction:
     jmp real_mode_start
 
+    DEBUG_sectors_read dd 0
+
 align 8
 gdt_start:
     gdt_null_seg_descr: 
@@ -84,6 +86,7 @@ protected_mode_start:
     mov esp, 0x7c00
     mov ebp , esp
 
+
     ; TODO(max): read kernel in elf format into memory
     ; TODO(max): setup proper kernel stack instead of temporrary stack at 0x7c00
     push 0      ; offset
@@ -107,7 +110,7 @@ protected_mode_start:
     ; phe ebx
     ; elf ecx
     ; pa  edx
-
+    mov dword [DEBUG_sectors_read], 0
     mov ecx, 0x1000
    
     mov eax, ecx 
@@ -150,6 +153,11 @@ protected_mode_start:
 .call_kernel_entry:
     mov eax, dword [0x1000 + ELF_ENTRY]
     jmp eax 
+
+    ;push 2
+    ;push 0x7c00 + 512
+    ;call read_sector
+    ;add esp, 8
 .hang:
     jmp .hang
 
@@ -177,7 +185,7 @@ protected_mode_start:
 %define IDE_STATUS_DATA_REQUEST        (1 << 3)
 %define IDE_STATUS_CORRECTABLE_DATA    (1 << 2)
 %define IDE_STATUS_INDEX               (1 << 1)
-%define IDE_STATUS_ERROR               (1)
+%define IDE_STATUS_ERROR               (1 << 0)
 
 ; void read_sector(void *dest, uint sector_num);
 ; * Reads a single sector from the ide hard drive into
@@ -197,15 +205,22 @@ read_sector:
     push ecx
     push edi
 
+    push eax
+    mov eax, [ebp + 12]
+    mov dword [DEBUG_sectors_read], eax
+    ;inc dword [DEBUG_sectors_read]
+    pop eax
+
     mov dx, IDE_STATUS
 .wait_disk_0: 
     in al, dx
     and al, 0xc0
-    cmp al, IDE_STATUS_DRIVE_READY
+    cmp al, 0x40 
     jne .wait_disk_0 
 
     mov dx, IDE_SECTOR_COUNT
     mov al, 1 
+    out dx, al
 
     mov dx, IDE_SECTOR_NUM
     mov eax, dword [ebp + 12] 
@@ -235,7 +250,7 @@ read_sector:
 .wait_disk_1: 
     in al, dx
     and al, 0xc0
-    cmp al, IDE_STATUS_DRIVE_READY
+    cmp al, 0x40 
     jne .wait_disk_1
 
     ; TODO(max): maybe replace loop with a single instruction (rep stosw)
