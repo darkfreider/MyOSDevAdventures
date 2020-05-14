@@ -68,7 +68,7 @@ char *msg[] = {
     "Holy shit! I've found this error!!!!"
 };
 
-int _start(void)
+int kmain(uint32_t magic)
 {
     clear_screen();
     vga_move_cursor(0, 0);
@@ -78,7 +78,10 @@ int _start(void)
  
     for (int i = 0; i < 4; i++)
 	   print_hex(arr[i], 0x07, 0, i + 6); 
+ 
+    print_hex(magic, 0x07, 0, 20); 
 
     for (;;);
+  
     return (0);
 }
