@@ -7,6 +7,11 @@
 #error "This should be compiled with ix86 compiler"
 #endif
 
+#include <stdint.h>
+
+#include "x86.c"
+#include "vga.c"
+
 char g_attr = 0x27;
 
 int arr[4] = {0xdeadbeef, 0xbeefdead, 0xdeaddead, 0xbeefbeef};
@@ -63,10 +68,10 @@ char *msg[] = {
     "Holy shit! I've found this error!!!!"
 };
 
-
 int _start(void)
 {
     clear_screen();
+    vga_move_cursor(0, 0);
 
     for (int i = 0; i < 5; i++)
 	    print_message(msg[i], g_attr, 0, i);
