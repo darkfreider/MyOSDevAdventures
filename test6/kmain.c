@@ -9,7 +9,11 @@
 
 #include <stdint.h>
 
+// TODO(max): create .h files for .c files
+#include "trap.h"
+
 #include "x86.c"
+#include "trap.c"
 #include "vga.c"
 
 char g_attr = 0x27;
