@@ -32,6 +32,30 @@ void vga_move_cursor(int x, int y)
     outb(0x3d5, temp);
 }
 
+void vga_clear_screen(void)
+{
+    int len = 80 * 25;
+
+    volatile short *video = (volatile short *)0xb8000;
+    while (len-- > 0)
+    {
+        *video++ = 0;
+    }
+}
+
+void vga_print_message(const char *msg, char attr, int x, int y)
+{
+    volatile char *video = (volatile char *)0xb8000;
+
+    video += 2 * (y * 80 + x);
+    while (*msg)
+    {
+       *video++ = *msg++;
+       *video++ = attr;
+    }
+
+}
+
 
 
 

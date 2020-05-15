@@ -30,6 +30,18 @@ reade_flags(void)
     return eflags;
 }
 
+void
+load_idt(Interrupt_gate *p, uint16_t size)
+{
+    volatile uint16_t idtr[3];
+
+    idtr[0] = size - 1;
+    idtr[1] = (uint16_t)(p);
+    idtr[2] = (uint32_t)(p) >> 16;
+
+    __asm__ volatile("lidt (%0)" :: "r" (idtr));
+}
+
 void 
 cli(void)
 {

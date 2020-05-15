@@ -28,9 +28,24 @@ struct Trap_frame
 };
 typedef struct Trap_frame Trap_frame;
 
+struct Interrupt_gate
+{
+    uint16_t offset_0_15;
+    uint16_t selector;
 
+    uint8_t zero;
+    uint8_t type; 
 
+    uint16_t offset_16_31;
+} __attribute__((packed));
+typedef struct Interrupt_gate Interrupt_gate;
 
+extern Interrupt_gate idt[256];
+
+inline void trap_static_asserts(void)
+{
+    static_assert(sizeof(Interrupt_gate) == 8);
+}
 
 #endif
 

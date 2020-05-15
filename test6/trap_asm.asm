@@ -20,10 +20,12 @@ all_traps:
     %assign i 0
     %rep 256
     %if ((i == 8) || (i >= 10 && i <= 15) || (i == 17) || (i == 21))
+        global vector%+ i 
         vector%+ i:
             push i
             jmp all_traps      
     %else
+        global vector%+ i
         vector%+ i:
             push 0
             push i
@@ -38,13 +40,14 @@ all_traps:
 GENERATE_INT_VECTORS
 
 %macro GENERATE_INT_VECTORS_ARRAY 0
-   vectors_array:
+    global vectors_array 
+    vectors_array:
 
-   %assign i 0
-   %rep 256
-       dd vector%+ i
-   %assign i i+1
-   %endrep
+    %assign i 0
+    %rep 256
+        dd vector%+ i
+    %assign i i+1
+    %endrep
 
 %endmacro
 

@@ -9,40 +9,19 @@
 
 #include <stdint.h>
 
+#define static_assert(e) do { switch(0) { case 0: case (e):break; } } while(0)
+
 // TODO(max): create .h files for .c files
 #include "trap.h"
 
 #include "x86.c"
-#include "trap.c"
 #include "vga.c"
+#include "trap.c"
+
 
 char g_attr = 0x27;
 
 int arr[4] = {0xdeadbeef, 0xbeefdead, 0xdeaddead, 0xbeefbeef};
-
-void clear_screen(void)
-{
-    int len = 80 * 25;
-
-    volatile short *video = (volatile short *)0xb8000;
-    while (len-- > 0)
-    {
-        *video++ = 0;
-    }
-}
-
-void print_message(const char *msg, char attr, int x, int y)
-{
-    volatile char *video = (volatile char *)0xb8000;
-
-    video += 2 * (y * 80 + x); 
-    while (*msg)
-    {
-       *video++ = *msg++;
-       *video++ = attr; 
-    } 
-
-}
 
 void print_hex(int h, char attr, int x, int y)
 {
@@ -61,7 +40,7 @@ void print_hex(int h, char attr, int x, int y)
     out[8] = hex_to_char[(h >> 4) & 0xf];
     out[9] = hex_to_char[(h >> 0) & 0xf];
 
-    print_message(out, attr, x, y);
+    vga_print_message(out, attr, x, y);
 }
 
 char *msg[] = { 
@@ -74,17 +53,24 @@ char *msg[] = {
 
 int kmain(uint32_t magic)
 {
-    clear_screen();
+    trap_init();
+
+    vga_clear_screen();
     vga_move_cursor(0, 0);
 
     for (int i = 0; i < 5; i++)
-	    print_message(msg[i], g_attr, 0, i);
+	    vga_print_message(msg[i], g_attr, 0, i);
  
-    for (int i = 0; i < 4; i++)
-	   print_hex(arr[i], 0x07, 0, i + 6); 
- 
+
     print_hex(magic, 0x07, 0, 20); 
 
+    
+    __asm__ volatile("int $32"); 
+
+    vga_print_message("Return from trap!", 0x07, 0, 2);
+    for (int i = 0; i < 4; i++)
+	   print_hex(arr[i], 0x07, 0, i + 4); 
+    
     for (;;);
   
     return (0);
