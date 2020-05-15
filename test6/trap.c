@@ -15,9 +15,8 @@ init_interrupt_gate_entry(Interrupt_gate *entry, uint32_t offset, uint16_t selec
 }
 
 void test_trap_handler(void)
-{
-    vga_clear_screen();
-    vga_print_message("Hello from trap!", 0x07, 0, 0);    
+{ 
+    vga_print_message("Hello from trap LOLOL!", 0x07, 0, 1);    
 }
 
 void 
@@ -28,8 +27,6 @@ trap_init(void)
         init_interrupt_gate_entry(&idt[i], vectors_array[i], 0x08);
     }
 
-    init_interrupt_gate_entry(&idt[32], (uint32_t)test_trap_handler, 0x08);
-
     load_idt(idt, sizeof(idt));
 }
 
@@ -38,12 +35,12 @@ trap_init(void)
 void 
 trap(Trap_frame *frame)
 {
-    vga_print_message("trap()", 0x07, 0, 24);
+    vga_print_message("trap()", 0x07, 0, 0); 
     if (frame->trap_num == 32)
     {
-        test_trap_handler(); 
+      test_trap_handler(); 
     }
-
+    
     return;
 }
 

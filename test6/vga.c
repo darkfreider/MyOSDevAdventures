@@ -34,12 +34,13 @@ void vga_move_cursor(int x, int y)
 
 void vga_clear_screen(void)
 {
-    int len = 80 * 25;
+    int len = 2 * 80 * 25;
 
-    volatile short *video = (volatile short *)0xb8000;
+    volatile uint8_t *video = (volatile uint8_t *)0xb8000;
     while (len-- > 0)
     {
-        *video++ = 0;
+        *video++ = ' ';
+	*video++ = 0;
     }
 }
 

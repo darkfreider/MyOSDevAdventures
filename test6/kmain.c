@@ -58,18 +58,8 @@ int kmain(uint32_t magic)
     vga_clear_screen();
     vga_move_cursor(0, 0);
 
-    for (int i = 0; i < 5; i++)
-	    vga_print_message(msg[i], g_attr, 0, i);
- 
-
-    print_hex(magic, 0x07, 0, 20); 
-
-    
     __asm__ volatile("int $32"); 
-
     vga_print_message("Return from trap!", 0x07, 0, 2);
-    for (int i = 0; i < 4; i++)
-	   print_hex(arr[i], 0x07, 0, i + 4); 
     
     for (;;);
   
