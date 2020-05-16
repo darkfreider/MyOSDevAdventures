@@ -7,18 +7,28 @@
 #error "This should be compiled with ix86 compiler"
 #endif
 
-#include <stdint.h>
-
 #define static_assert(e) do { switch(0) { case 0: case (e):break; } } while(0)
 
-// TODO(max): create .h files for .c files
+#include <stdint.h>
+
 #include "trap.h"
 #include "vga.h"
+#include "ps2.h"
+
+void runtime_assert(int e, const char *msg)
+{
+    if (e == 0)
+    {
+        vga_clear_screen();
+        vga_print_message(msg, 0x07, 0, 0);
+    }
+}
+
 
 #include "x86.c"
 #include "vga.c"
 #include "trap.c"
-
+#include "ps2.c"
 
 char g_attr = 0x27;
 
