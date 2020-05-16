@@ -35,7 +35,25 @@ void vga_print_message(const char *msg, char attr, int x, int y)
 
 }
 
+void vga_print_hex(int h, char attr, int x, int y)
+{
+    char *hex_to_char = "0123456789abcdef";
+    char out[] = "0x00000000 ";
 
+    out[2] = hex_to_char[(h >> 28) & 0xf];
+    out[3] = hex_to_char[(h >> 24) & 0xf];
+
+    out[4] = hex_to_char[(h >> 20) & 0xf];
+    out[5] = hex_to_char[(h >> 16) & 0xf];
+
+    out[6] = hex_to_char[(h >> 12) & 0xf];
+    out[7] = hex_to_char[(h >> 8) & 0xf];
+
+    out[8] = hex_to_char[(h >> 4) & 0xf];
+    out[9] = hex_to_char[(h >> 0) & 0xf];
+
+    vga_print_message(out, attr, x, y);
+}
 
 
 

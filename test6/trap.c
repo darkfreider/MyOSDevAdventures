@@ -62,10 +62,23 @@ test_trap_handler(void)
     vga_print_message("Hello from trap LOLOL!", 0x07, 0, 1);    
 }
 
+char scancode_to_char[256] = {
+
+    [0x10] = 'Q',
+    [0x11] = 'W',
+    [0x12] = 'E',
+    [0x13] = 'R',
+    [0x14] = 'T', 
+    [0x15] = 'Y',
+    [0x16] = 'U',
+    [0x17] = 'I',
+    [0x18] = 'O',
+    [0x19] = 'P',
+};
+
 void 
 trap(Trap_frame *frame)
 {
-    vga_print_message("trap()", 0x07, 0, 0);
 
     switch (frame->trap_num)
     {
@@ -78,16 +91,19 @@ trap(Trap_frame *frame)
         {
 	    pic_eoi(1);
 
-            uint8_t scan_code = inb(0x60);
-	    char msg[2] = { scan_code, 0 };
-	    vga_clear_screen();
-            vga_print_message(msg, 0x07, 0, 0); 
+            uint8_t scan_code = ps2_in_data(); 
+	    if (!(scan_code & 0x80))
+	    {
+		char m[2] = { scancode_to_char[scan_code], 0 };
+		vga_print_message(m, 0x07, 0, 5);
+                //vga_print_hex(scan_code, 0x07, 0, 5); 
+            }	
 	} break;	
     
         default:
 	{
 	    vga_clear_screen();
-            vga_print_message("I can't handle this interrupt", 0x07, 0, 0);	
+            vga_print_message("I can't handle this interrupt", 0x07, 0, 15);	
 	} break;	
     } 
 }

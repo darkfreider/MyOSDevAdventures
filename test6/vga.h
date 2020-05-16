@@ -22,7 +22,7 @@ typedef enum VGA_text_colors VGA_text_colors;
 void vga_move_cursor(int x, int y);
 void vga_clear_screen(void);
 void vga_print_message(const char *msg, char attr, int x, int y);
-
+void vga_print_hex(int h, char attr, int x, int y);
 
 
 #endif
