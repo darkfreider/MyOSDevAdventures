@@ -1,9 +1,24 @@
 
 
-#include <stdint.h>
 
 #ifndef __TRAP_H__
 #define __TRAP_H__
+
+#include <stdint.h>
+
+#define PIC1_CMD 0x20
+#define PIC1_DATA (PIC1_CMD + 1)
+#define PIC2_CMD 0xa0
+#define PIC2_DATA (PIC2_CMD + 1)
+
+#define PIC_EOI 0x20
+
+#define ICW1_INIT 0x10
+#define ICW1_ICW4 0x01
+#define ICW4_8086 0x1
+
+#define PIC1_NEW_OFFSET 0x20
+#define PIC2_NEW_OFFSET 0x28 
 
 struct Trap_frame
 {
@@ -41,6 +56,17 @@ struct Interrupt_gate
 typedef struct Interrupt_gate Interrupt_gate;
 
 extern Interrupt_gate idt[256];
+
+#define IRQ_BASE 32
+#define IRQ_0 IRQ_BASE + 0
+#define IRQ_1 IRQ_BASE + 1
+
+void pic_eoi(uint8_t);
+void init_interrupt_gate_entry(Interrupt_gate *, uint32_t, uint16_t);
+void trap_init(void);
+void trap(Trap_frame *);
+
+
 
 inline void trap_static_asserts(void)
 {

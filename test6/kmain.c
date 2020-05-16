@@ -13,6 +13,7 @@
 
 // TODO(max): create .h files for .c files
 #include "trap.h"
+#include "vga.h"
 
 #include "x86.c"
 #include "vga.c"
@@ -58,10 +59,31 @@ int kmain(uint32_t magic)
     vga_clear_screen();
     vga_move_cursor(0, 0);
 
-    __asm__ volatile("int $32"); 
+    __asm__ volatile("int $0x80"); 
     vga_print_message("Return from trap!", 0x07, 0, 2);
     
+    print_hex(inb(PIC1_DATA), 0x07, 0, 10);
+    print_hex(inb(PIC2_DATA), 0x07, 0, 11);
+
+    // TODO(max): I need to initialize ps2 controller before this 
+    //uint8_t new_mask = inb(PIC1_DATA) & ~(1 << 1);
+    //print_hex(inb(PIC1_DATA), 0x07, 0, 10);
+    //sti();
+
     for (;;);
   
     return (0);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

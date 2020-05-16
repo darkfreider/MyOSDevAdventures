@@ -19,7 +19,7 @@ all_traps:
 
     %assign i 0
     %rep 256
-    %if ((i == 8) || (i >= 10 && i <= 15) || (i == 17) || (i == 21))
+    %if ((i == 8) || (i >= 10 && i <= 14) || (i == 17) || (i == 21))
         global vector%+ i 
         vector%+ i:
             push i
