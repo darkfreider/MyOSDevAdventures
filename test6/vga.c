@@ -1,41 +1,118 @@
 
+uint16_t *g_console_memory = (uint16_t *)0xb8000;
+int g_text_attr = 0x07;
+int g_cursor_x = 0;
+int g_cursor_y = 0;
 
-void vga_move_cursor(int x, int y)
+
+void 
+vga_set_text_color(uint8_t fg, uint8_t bg)
 {
+    g_text_attr = (bg << 4) | (fg & 0x0F);
+}
+
+void 
+vga_move_cursor(int x, int y)
+{	
+    g_cursor_x = x;
+    g_cursor_y = y;
+	
     uint16_t temp = y * SCREEN_WIDTH + x;
-
-    outb(0x3d4, 14);
-    outb(0x3d5, temp >> 8);
-    outb(0x3d4, 15);
-    outb(0x3d5, temp);
+	
+    outb(0x3D4, 14);
+    outb(0x3D5, temp >> 8);
+    outb(0x3D4, 15);
+    outb(0x3D5, temp);
 }
 
-void vga_clear_screen(void)
-{
-    int len = 2 * 80 * 25;
-
-    volatile uint8_t *video = (volatile uint8_t *)0xb8000;
-    while (len-- > 0)
+void
+vga_clear_screen(void)
+{	
+    uint16_t blank = ' ' | (g_text_attr << 8);
+	
+    for (int i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH; i++)
     {
-        *video++ = ' ';
-	*video++ = 0;
+        g_console_memory[i] = blank;
+    }
+	
+    vga_move_cursor(0, 0);
+}
+
+void
+vga_scroll_screen(void)
+{
+	
+    if (g_cursor_y >= SCREEN_HEIGHT)
+    {
+        int i;
+	uint16_t blank = ' ' | (g_text_attr << 8);
+		
+	uint16_t chars_to_copy = ((SCREEN_HEIGHT - 1) * SCREEN_WIDTH);
+	uint16_t *dest = g_console_memory;
+	uint16_t *src = g_console_memory + SCREEN_WIDTH;
+		
+	for (i = 0; i < chars_to_copy; i++)
+	{
+	    dest[i] = src[i];
+        }
+		
+	for (i = 0; i < SCREEN_WIDTH; i++)
+	{
+	    g_console_memory[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + i] = blank;
+	}
+		
+	vga_move_cursor(g_cursor_x, SCREEN_HEIGHT - 1);
     }
 }
 
-void vga_print_message(const char *msg, char attr, int x, int y)
+void 
+put_char(char c)
 {
-    volatile char *video = (volatile char *)0xb8000;
-
-    video += 2 * (y * 80 + x);
-    while (*msg)
+	
+    if (c == '\r')
     {
-       *video++ = *msg++;
-       *video++ = attr;
+	g_cursor_x = 0;
     }
-
+    else if (c == '\n')
+    {
+	g_cursor_y++;
+	g_cursor_x = 0;
+    }
+    else if (c == '\b')
+    {
+        if (g_cursor_x > 0)
+	{
+	    g_cursor_x--;
+	}
+    }
+    else if (c >= ' ') // isprint(c)
+    {
+	uint16_t attr = c | (g_text_attr << 8);
+	g_console_memory[g_cursor_y * SCREEN_WIDTH + g_cursor_x] = attr; 
+	g_cursor_x++;
+    }
+	
+    if (g_cursor_x >= SCREEN_WIDTH)
+    {
+	g_cursor_x = 0;
+	g_cursor_y++;
+    }
+	
+    vga_scroll_screen();
+    vga_move_cursor(g_cursor_x, g_cursor_y);
 }
 
-void vga_print_hex(int h, char attr, int x, int y)
+void 
+put_str(const char *s)
+{
+    while (*s)
+    {
+	put_char(*s);
+        s++;
+    }
+}
+
+void print_hex(int h)
 {
     char *hex_to_char = "0123456789abcdef";
     char out[] = "0x00000000 ";
@@ -52,7 +129,7 @@ void vga_print_hex(int h, char attr, int x, int y)
     out[8] = hex_to_char[(h >> 4) & 0xf];
     out[9] = hex_to_char[(h >> 0) & 0xf];
 
-    vga_print_message(out, attr, x, y);
+    put_str(out); 
 }
 
 

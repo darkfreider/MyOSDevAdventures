@@ -19,10 +19,14 @@ enum VGA_text_colors
 };
 typedef enum VGA_text_colors VGA_text_colors;
 
-void vga_move_cursor(int x, int y);
+void vga_set_text_color(uint8_t, uint8_t);
+void vga_move_cursor(int, int);
 void vga_clear_screen(void);
-void vga_print_message(const char *msg, char attr, int x, int y);
-void vga_print_hex(int h, char attr, int x, int y);
+void vga_scroll_screen(void);
+
+void put_char(char);
+void put_str(const char *);
+void print_hex(int h);
 
 
 #endif

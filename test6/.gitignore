@@ -5,7 +5,4 @@
 
 kmain
 make_img
-meta_elf
 
-meta_elf.c
-scratchpad.txt

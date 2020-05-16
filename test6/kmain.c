@@ -20,7 +20,7 @@ void runtime_assert(int e, const char *msg)
     if (e == 0)
     {
         vga_clear_screen();
-        vga_print_message(msg, 0x07, 0, 0);
+        put_str(msg); 
     }
 }
 
@@ -50,23 +50,24 @@ int kmain(uint32_t magic)
     uint8_t new_mask = inb(PIC1_DATA) & ~(1 << 1);
     outb(PIC1_DATA, new_mask); 
     sti();
-     
+   
+    vga_set_text_color(BLACK, GREY);  
     vga_clear_screen();
-    vga_move_cursor(0, 0); 
+    
     __asm__ volatile("int $0x80");   
    
-    for (;;)
     {    
         
-        vga_print_message("Return from trap!", 0x07, 0, 2);
+        put_str("Return from trap!\n");
     
-        vga_print_hex(inb(PIC1_DATA), 0x07, 0, 10);
-        vga_print_hex(inb(PIC2_DATA), 0x07, 0, 11);    
+        print_hex(inb(PIC1_DATA));
+        put_char('\n'); 
+	print_hex(inb(PIC2_DATA));
+	put_char('\n');
     }
-    
-    
-    for (;;);
-  
+
+    for(;;);
+
     return (0);
 }
 

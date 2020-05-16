@@ -59,7 +59,7 @@ trap_init(void)
 void 
 test_trap_handler(void)
 { 
-    vga_print_message("Hello from trap LOLOL!", 0x07, 0, 1);    
+    put_str("Hello from trap LOLOL!\n");
 }
 
 char scancode_to_char[256] = {
@@ -79,7 +79,6 @@ char scancode_to_char[256] = {
 void 
 trap(Trap_frame *frame)
 {
-
     switch (frame->trap_num)
     {
         case 0x80:
@@ -94,16 +93,15 @@ trap(Trap_frame *frame)
             uint8_t scan_code = ps2_in_data(); 
 	    if (!(scan_code & 0x80))
 	    {
-		char m[2] = { scancode_to_char[scan_code], 0 };
-		vga_print_message(m, 0x07, 0, 5);
-                //vga_print_hex(scan_code, 0x07, 0, 5); 
+		char m[3] = { scancode_to_char[scan_code], ' ', 0 };
+		put_str(m);
             }	
 	} break;	
     
         default:
 	{
 	    vga_clear_screen();
-            vga_print_message("I can't handle this interrupt", 0x07, 0, 15);	
+            put_str("I can't handle this interrupt\n");
 	} break;	
     } 
 }
