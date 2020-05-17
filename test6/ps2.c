@@ -31,12 +31,12 @@ ps2_out_data_wait(uint16_t port, uint8_t data)
 void 
 ps2_controller_init(void)
 {
-    // NOTE(max): disable devices
+    // NOTE(max): disable devices 
     ps2_out_data_wait(PS2_CMD, PS2_CMD_DISABLE_PORT_1);
     ps2_out_data_wait(PS2_CMD, PS2_CMD_DISABLE_PORT_2);
 
     // NOTE(max): flush output buffer
-    ps2_in_data_wait();
+    ps2_in_data();
 
     // NOTE(max): set configuration byte
     ps2_out_data_wait(PS2_CMD, PS2_CMD_READ_CONFIG_BYTE);
@@ -56,7 +56,9 @@ ps2_controller_init(void)
     ps2_out_data_wait(PS2_CMD, PS2_CMD_ENABLE_PORT_1);
 
     // NOTE(max): reset device
-    ps2_out_data_wait(PS2_DATA, PS2_KBD_CMD_RESET); 
+    ps2_out_data_wait(PS2_DATA, PS2_KBD_CMD_RESET);
+    // NOTE(max): I don't check return value, I assume that qemu will always do ok
+    ps2_in_data_wait();
 }
 
 

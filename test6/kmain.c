@@ -44,15 +44,15 @@ char *msg[] = {
 
 int kmain(uint32_t magic)
 {
+    vga_set_text_color(BLACK, GREY);  
+    vga_clear_screen();
+    
     trap_init();
     ps2_controller_init();
     
     uint8_t new_mask = inb(PIC1_DATA) & ~(1 << 1);
     outb(PIC1_DATA, new_mask); 
-    sti();
-   
-    vga_set_text_color(BLACK, GREY);  
-    vga_clear_screen();
+    sti(); 
     
     __asm__ volatile("int $0x80");   
    

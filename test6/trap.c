@@ -62,7 +62,18 @@ test_trap_handler(void)
     put_str("Hello from trap LOLOL!\n");
 }
 
-char scancode_to_char[256] = {
+char normal_map[256] = 
+{
+    [0x02] = '1',
+    [0x03] = '2',
+    [0x04] = '3',
+    [0x05] = '4',
+    [0x06] = '5',
+    [0x07] = '6',
+    [0x08] = '7',
+    [0x09] = '8',
+    [0x0a] = '9',
+    [0x0b] = '0',
 
     [0x10] = 'Q',
     [0x11] = 'W',
@@ -73,7 +84,7 @@ char scancode_to_char[256] = {
     [0x16] = 'U',
     [0x17] = 'I',
     [0x18] = 'O',
-    [0x19] = 'P',
+    [0x19] = 'P',    
 };
 
 void 
@@ -93,7 +104,7 @@ trap(Trap_frame *frame)
             uint8_t scan_code = ps2_in_data(); 
 	    if (!(scan_code & 0x80))
 	    {
-		char m[3] = { scancode_to_char[scan_code], ' ', 0 };
+		char m[3] = { scancode_to_char[scan_code],  0 };
 		put_str(m);
             }	
 	} break;	
