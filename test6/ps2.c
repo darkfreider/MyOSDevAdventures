@@ -52,13 +52,29 @@ ps2_controller_init(void)
     ps2_out_data_wait(PS2_CMD, PS2_CMD_WRITE_CONFIG_BYTE);
     ps2_out_data_wait(PS2_DATA, config_byte);
 
-    // NOTE(max): enable device
+    // NOTE(max): Reset keyboard
+    //            Keyboard will send 2 bytes:
+    //            0xfa - command acknowledge
+    //            0xaa - self test passed (sent after reset(0xff) command)
+    ps2_out_data_wait(PS2_DATA, PS2_KBD_CMD_RESET);
+#if 1
+    ps2_in_data_wait(); // 0xfa - cmd akw
+    ps2_in_data_wait(); // 0xaa - self test passed
+#else 
+    uint8_t val = ps2_in_data_wait();
+    put_str("sp2 end init: ");
+    print_hex(val);
+    put_char('\n');
+    
+    val = ps2_in_data_wait();
+    put_str("sp2 end init: ");
+    print_hex(val);
+    put_char('\n');
+#endif
+
+    // NOTE(max): enable keyboard
     ps2_out_data_wait(PS2_CMD, PS2_CMD_ENABLE_PORT_1);
 
-    // NOTE(max): reset device
-    ps2_out_data_wait(PS2_DATA, PS2_KBD_CMD_RESET);
-    // NOTE(max): I don't check return value, I assume that qemu will always do ok
-    ps2_in_data_wait();
 }
 
 

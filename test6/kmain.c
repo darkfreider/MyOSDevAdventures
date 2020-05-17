@@ -66,6 +66,7 @@ int kmain(uint32_t magic)
         put_char('\n'); 
 	print_hex(inb(PIC2_DATA));
 	put_char('\n');
+	put_char('\n');
     }
 
     for(;;);

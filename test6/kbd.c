@@ -64,43 +64,110 @@ char normal_map[256] =
     [0x35] = '/',
     [0x36] = VK_RSHIFT,
     [0x37] = '*',
-    // [0x38] = VK_LALT, don't need this alt key
+    [0x38] = VK_LALT, 
     [0x39] = ' ',
-
 };
+
+KBD_msg g_kbd_msg_queue[KBD_MSG_QUEUE_SIZE];
+int g_kbd_msg_queue_nitems = 0;
+int g_kbd_msg_queue_front  = 0;
+int g_kbd_msg_queue_back   = 0;
+
+KBD_msg get_kbd_msg(void)
+{
+    KBD_msg result;
+
+    int spin = 1;
+    do
+    {
+	cli();
+        if (g_kbd_msg_queue_nitems > 0)
+	{
+            spin = 0;
+
+            result = g_kbd_msg_queue[g_kbd_msg_queue_front++];
+	    if (g_kbd_msg_queue_front == KBD_MSG_QUEUE_SIZE)
+	    {
+	        g_kbd_msg_queue_front = 0; 
+	    }
+	    g_kbd_msg_queue_nitems--;   
+	}
+        sti();	
+    } while (spin);
+
+    return (result); 
+}
+
+// NOTE(max): Keyboard driver puts messages in a message queue
+// IMPORTANT(max): This should be used only by kbd driver,
+//                 and we assume that interrupts are OFF
+void put_kbd_msg(KBD_msg msg)
+{
+    g_kbd_msg_queue[g_kbd_msg_queue_back++] = msg;
+    if (g_kbd_msg_queue_back == KBD_MSG_QUEUE_SIZE)
+    {
+        g_kbd_msg_queue_back = 0;
+    }
+
+    put_str("put_kbd_msg\n");
+    g_kbd_msg_queue_nitems++;
+    if (g_kbd_msg_queue_nitems > KBD_MSG_QUEUE_SIZE)
+    {
+        g_kbd_msg_queue_front = g_kbd_msg_queue_back;
+	g_kbd_msg_queue_nitems = KBD_MSG_QUEUE_SIZE;
+    }
+}
 
 Kbd_dirver_state g_kbd_driver_state = KBD_DRIVER_STATE_DEFAULT;
 
+int g_shift_down = 0;
+int g_ctrl_down  = 0;
+int g_alt_down   = 0;
 
 void kbd_handler(void)
 {
     uint8_t scan_code = ps2_in_data();
-
     print_hex(scan_code);
     put_char('\n');
-
     switch (g_kbd_driver_state)
     {
 	case KBD_DRIVER_STATE_DEFAULT:
         {
-            if (scan_code == 0x0e) // break code
+            if (scan_code == 0xe0) // break code
 	    {
                 g_kbd_driver_state = KBD_DRIVER_STATE_BREAK_1;
 	    }
             else
 	    {
 	        // NOTE(max): normal_map
-		if ((scan_code & 0x80) == 0)
-		{
-		    /*uint8_t vkey = normal_map[scan_code];
-		    if (vkey >= 0x20 && vkey <= 0x7e)
-		    {
-                        put_char(vkey); 
-		    }*/
-		    //print_hex(scan_code);	
-	        }
+                KBD_msg msg;
 
-	        g_kbd_driver_state = KBD_DRIVER_STATE_DEFAULT;	
+		msg.msg = ((scan_code) & 0x80) ? MSG_KEYUP : MSG_KEYDOWN;
+                msg.vk  = normal_map[scan_code & 0xef];
+
+                if ( ((msg.vk == VK_LSHIFT) || (msg.vk == VK_RSHIFT)) && 
+		     (msg.msg == MSG_KEYDOWN) )
+		    g_shift_down = 1;
+		else if ((msg.vk == VK_LSHIFT) || (msg.vk == VK_RSHIFT))
+		    g_shift_down = 0;
+
+		if ((msg.vk == VK_LCTRL) && (msg.msg == MSG_KEYDOWN))
+		    g_ctrl_down = 1;
+		else if (msg.vk == VK_LCTRL)
+		    g_ctrl_down = 0;
+
+	        if ((msg.vk == VK_LALT) && (msg.msg == MSG_KEYDOWN))
+		    g_alt_down = 1;
+	        else if (msg.vk == VK_LALT)
+		    g_alt_down = 0;
+
+	        msg.flags = (g_shift_down << 0) |
+		            (g_ctrl_down  << 1) |
+		            (g_alt_down   << 2);	    
+               
+                put_kbd_msg(msg);
+	        
+		g_kbd_driver_state = KBD_DRIVER_STATE_DEFAULT;	
 	    }	    
 	} break; 
 
@@ -138,6 +205,9 @@ void kbd_handler(void)
 	} break;
     } 
 
+    put_str("nitems "); 
+    print_hex(g_kbd_msg_queue_nitems);
+    put_char('\n');
 }
 
 
