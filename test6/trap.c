@@ -62,31 +62,6 @@ test_trap_handler(void)
     put_str("Hello from trap LOLOL!\n");
 }
 
-char normal_map[256] = 
-{
-    [0x02] = '1',
-    [0x03] = '2',
-    [0x04] = '3',
-    [0x05] = '4',
-    [0x06] = '5',
-    [0x07] = '6',
-    [0x08] = '7',
-    [0x09] = '8',
-    [0x0a] = '9',
-    [0x0b] = '0',
-
-    [0x10] = 'Q',
-    [0x11] = 'W',
-    [0x12] = 'E',
-    [0x13] = 'R',
-    [0x14] = 'T', 
-    [0x15] = 'Y',
-    [0x16] = 'U',
-    [0x17] = 'I',
-    [0x18] = 'O',
-    [0x19] = 'P',    
-};
-
 void 
 trap(Trap_frame *frame)
 {
@@ -100,13 +75,7 @@ trap(Trap_frame *frame)
         case IRQ_1: // keyboard
         {
 	    pic_eoi(1);
-
-            uint8_t scan_code = ps2_in_data(); 
-	    if (!(scan_code & 0x80))
-	    {
-		char m[3] = { scancode_to_char[scan_code],  0 };
-		put_str(m);
-            }	
+            kbd_handler();
 	} break;	
     
         default:

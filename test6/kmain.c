@@ -14,6 +14,7 @@
 #include "trap.h"
 #include "vga.h"
 #include "ps2.h"
+#include "kbd.h"
 
 void runtime_assert(int e, const char *msg)
 {
@@ -29,6 +30,7 @@ void runtime_assert(int e, const char *msg)
 #include "vga.c"
 #include "trap.c"
 #include "ps2.c"
+#include "kbd.c"
 
 char g_attr = 0x27;
 
