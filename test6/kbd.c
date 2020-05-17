@@ -109,7 +109,6 @@ void put_kbd_msg(KBD_msg msg)
         g_kbd_msg_queue_back = 0;
     }
 
-    put_str("put_kbd_msg\n");
     g_kbd_msg_queue_nitems++;
     if (g_kbd_msg_queue_nitems > KBD_MSG_QUEUE_SIZE)
     {
@@ -124,11 +123,11 @@ int g_shift_down = 0;
 int g_ctrl_down  = 0;
 int g_alt_down   = 0;
 
+// IMPORTANT(max): Currently we don't handle Pause key. Don't touch it!
 void kbd_handler(void)
 {
     uint8_t scan_code = ps2_in_data();
-    print_hex(scan_code);
-    put_char('\n');
+    //print_hex(scan_code); 
     switch (g_kbd_driver_state)
     {
 	case KBD_DRIVER_STATE_DEFAULT:
@@ -143,29 +142,41 @@ void kbd_handler(void)
                 KBD_msg msg;
 
 		msg.msg = ((scan_code) & 0x80) ? MSG_KEYUP : MSG_KEYDOWN;
-                msg.vk  = normal_map[scan_code & 0xef];
+                msg.vk  = normal_map[scan_code & 0x7f];
+                switch (msg.vk)
+		{
+                    case VK_LSHIFT:
+	            case VK_RSHIFT:
+		    {
+		        if (msg.msg == MSG_KEYDOWN)
+                            g_shift_down = 1;
+		        else
+		            g_shift_down = 0;	
+		    } break;
 
-                if ( ((msg.vk == VK_LSHIFT) || (msg.vk == VK_RSHIFT)) && 
-		     (msg.msg == MSG_KEYDOWN) )
-		    g_shift_down = 1;
-		else if ((msg.vk == VK_LSHIFT) || (msg.vk == VK_RSHIFT))
-		    g_shift_down = 0;
+		    case VK_LCTRL:
+		    {
+		        if (msg.msg == MSG_KEYDOWN)
+                            g_ctrl_down = 1;
+		        else
+		            g_ctrl_down = 0;	
+		    
+		    } break;
 
-		if ((msg.vk == VK_LCTRL) && (msg.msg == MSG_KEYDOWN))
-		    g_ctrl_down = 1;
-		else if (msg.vk == VK_LCTRL)
-		    g_ctrl_down = 0;
-
-	        if ((msg.vk == VK_LALT) && (msg.msg == MSG_KEYDOWN))
-		    g_alt_down = 1;
-	        else if (msg.vk == VK_LALT)
-		    g_alt_down = 0;
+		    case VK_LALT:
+		    {
+		        if (msg.msg == MSG_KEYDOWN)
+                            g_alt_down = 1;
+		        else
+		            g_alt_down = 0;	
+		    } break;
+		}
 
 	        msg.flags = (g_shift_down << 0) |
 		            (g_ctrl_down  << 1) |
 		            (g_alt_down   << 2);	    
-               
-                put_kbd_msg(msg);
+                
+		put_kbd_msg(msg);
 	        
 		g_kbd_driver_state = KBD_DRIVER_STATE_DEFAULT;	
 	    }	    
@@ -204,10 +215,6 @@ void kbd_handler(void)
             runtime_assert(0, "Impossible kbd driver state\n");	
 	} break;
     } 
-
-    put_str("nitems "); 
-    print_hex(g_kbd_msg_queue_nitems);
-    put_char('\n');
 }
 
 

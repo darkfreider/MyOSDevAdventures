@@ -18,15 +18,15 @@ typedef enum Kbd_dirver_state Kbd_dirver_state;
 
 struct KBD_msg
 {
-    uint16_t msg;
-    uint16_t vk;
+    uint8_t msg;
+    uint8_t vk;
 
     /*
 	(1 << 0) : shift state
 	(1 << 1) : ctrl  state
 	(1 << 2) : alt   state
     */
-    uint16_t flags; 
+    uint8_t flags; 
 };
 typedef struct KBD_msg KBD_msg;
 
