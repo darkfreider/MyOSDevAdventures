@@ -103,17 +103,14 @@ KBD_msg get_kbd_msg(void)
 //                 and we assume that interrupts are OFF
 void put_kbd_msg(KBD_msg msg)
 {
-    g_kbd_msg_queue[g_kbd_msg_queue_back++] = msg;
-    if (g_kbd_msg_queue_back == KBD_MSG_QUEUE_SIZE)
+    if (g_kbd_msg_queue_nitems < KBD_MSG_QUEUE_SIZE)
     {
-        g_kbd_msg_queue_back = 0;
-    }
-
-    g_kbd_msg_queue_nitems++;
-    if (g_kbd_msg_queue_nitems > KBD_MSG_QUEUE_SIZE)
-    {
-        g_kbd_msg_queue_front = g_kbd_msg_queue_back;
-	g_kbd_msg_queue_nitems = KBD_MSG_QUEUE_SIZE;
+        g_kbd_msg_queue[g_kbd_msg_queue_back++] = msg;
+        if (g_kbd_msg_queue_back == KBD_MSG_QUEUE_SIZE)
+        {
+            g_kbd_msg_queue_back = 0;
+        }
+	g_kbd_msg_queue_nitems++;
     }
 }
 
@@ -127,7 +124,7 @@ int g_alt_down   = 0;
 void kbd_handler(void)
 {
     uint8_t scan_code = ps2_in_data();
-    //print_hex(scan_code); 
+    
     switch (g_kbd_driver_state)
     {
 	case KBD_DRIVER_STATE_DEFAULT:
@@ -143,7 +140,10 @@ void kbd_handler(void)
 
 		msg.msg = ((scan_code) & 0x80) ? MSG_KEYUP : MSG_KEYDOWN;
                 msg.vk  = normal_map[scan_code & 0x7f];
-                switch (msg.vk)
+                if (msg.vk == 0)
+		       break;
+
+		switch (msg.vk)
 		{
                     case VK_LSHIFT:
 	            case VK_RSHIFT:
