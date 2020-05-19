@@ -115,7 +115,7 @@ put_str(const char *s)
 void print_hex(int h)
 {
     char *hex_to_char = "0123456789abcdef";
-    char out[] = "0x00000000 ";
+    char out[] = "0x00000000";
 
     out[2] = hex_to_char[(h >> 28) & 0xf];
     out[3] = hex_to_char[(h >> 24) & 0xf];
@@ -132,7 +132,56 @@ void print_hex(int h)
     put_str(out); 
 }
 
+/*
+ * This printf function can handle:
+ *     "%s" strings,
+ *     "%x" 32-bit hex values
+ *     "%c" ascii characters
+ *     "%%"
+ *
+ * */
+void printf(const char *format, ...)
+{
+    va_list vl;
+    va_start(vl, format);
 
+    const char *p = format;
+    while (*p)
+    {
+        if (*p == '%')
+	{
+            if (p[1] == '%')
+	        put_char('%');
+            else if (p[1] == 's')
+	    {
+	        const char *str = va_arg(vl, const char *);
+	        put_str(str);	
+	    }
+	    else if (p[1] == 'x')
+	    {
+                uint32_t n = va_arg(vl, uint32_t);
+		print_hex(n);
+	    }
+	    else if (p[1] == 'c')
+	    {
+                uint8_t c = (uint8_t)va_arg(vl, uint32_t);
+		put_char(c);
+	    }
+	    else
+	    {
+	        put_char(p[1]); 
+	    }
+
+	    p += 2; 
+	}
+	else
+	{
+            put_char(*p++);	
+	}
+    }
+
+    va_end(vl); 
+}
 
 
 

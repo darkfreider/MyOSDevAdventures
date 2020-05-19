@@ -10,11 +10,13 @@
 #define static_assert(e) do { switch(0) { case 0: case (e):break; } } while(0)
 
 #include <stdint.h>
+#include <stdarg.h>
 
 #include "trap.h"
 #include "vga.h"
 #include "ps2.h"
 #include "kbd.h"
+#include "pci.h"
 
 void runtime_assert(int e, const char *msg)
 {
@@ -30,8 +32,9 @@ void runtime_assert(int e, const char *msg)
 #include "trap.c"
 #include "ps2.c"
 #include "kbd.c"
+#include "pci.c"
 
-#define INPUT_BUFFER_SIZE 16 
+#define INPUT_BUFFER_SIZE 512
 char g_input_buf[INPUT_BUFFER_SIZE];
 int  g_input_buf_next_write = 0;
 int  g_input_buf_next_read  = 0;
@@ -66,7 +69,10 @@ get_char(void)
 		    if (g_input_buf_next_write < (INPUT_BUFFER_SIZE - 1))
 		    {
 	                char c = (msg.flags & 0x01) ? msg.vk : to_lower(msg.vk);
-		        put_char(c);
+		        if (c == '-' && (msg.flags & 0x01))
+			    c = '_';	
+			
+			put_char(c);
 
 			g_input_buf[g_input_buf_next_write++] = c;
 	            }	
@@ -114,15 +120,41 @@ get_line(char *str, int len)
     return (i);
 }
 
+int 
+str_equal(const char *s0, const char *s1)
+{
+    int result = 0;
+
+    while ((*s0 == *s1) && *s0)
+    {
+        s0++; s1++;
+    }
+
+    if (*s0 == *s1)
+        result = 1;
+
+    return (result);
+}
+
 void 
 shell(void)
 {
     char str[64];
     for (;;)
     {
+        printf("@: ");
         get_line(str, sizeof(str));
-	put_str(str);
-	//put_char('\n');
+
+	if (str_equal("pci_scan\n", str))
+	{
+            pci_scan(); 
+	}
+	else if (str_equal("clear\n", str))
+	{
+            vga_clear_screen();
+	}
+	else
+	    put_str(str);
     }
 }
 
