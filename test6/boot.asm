@@ -303,7 +303,8 @@ read_segment:
     ; translate offset in bytes to offset in sectors
     mov ecx, [ebp + 16]
     shr ecx, LOG2_SECTOR_SIZE 
-    inc ecx
+    ;inc ecx
+    add ecx, 2
 
     mov ebx, [ebp + 8]
     add ebx, [ebp + 12]
@@ -330,7 +331,8 @@ read_segment:
     ret
 
 
-times 510 - ($-$$) db 0
+times 506 - ($-$$) db 0
+mata_block_start: dd 0
 dw 0xaa55
 
 

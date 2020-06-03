@@ -17,6 +17,7 @@
 #include "ps2.h"
 #include "kbd.h"
 #include "pci.h"
+#include "elf.h"
 
 void runtime_assert(int e, const char *msg)
 {
@@ -33,6 +34,7 @@ void runtime_assert(int e, const char *msg)
 #include "ps2.c"
 #include "kbd.c"
 #include "pci.c"
+#include "module.c"
 
 #define INPUT_BUFFER_SIZE 512
 char g_input_buf[INPUT_BUFFER_SIZE];
@@ -136,6 +138,20 @@ str_equal(const char *s0, const char *s1)
     return (result);
 }
 
+
+Module modules_table[32];
+
+void
+print_modules(void)
+{
+    read_sector(modules_table, 1);
+
+    for (uint32_t i = 0; i < modules_table[0].index; i++)
+    {
+        printf("%s\n", modules_table[i + 1].name);
+    }
+}
+
 void 
 shell(void)
 {
@@ -152,6 +168,10 @@ shell(void)
 	else if (str_equal("clear\n", str))
 	{
             vga_clear_screen();
+	}
+	else if (str_equal("run\n", str))
+	{
+            print_modules();
 	}
 	else
 	    put_str(str);

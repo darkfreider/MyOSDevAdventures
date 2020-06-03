@@ -131,8 +131,6 @@ pci_print_device_info(uint8_t bus, uint8_t dev)
 void
 pci_scan(void)
 {
-    PCI_device_id id = pci_read_device_id(1, 0, 0);
-
     for (int bus_index = 0; bus_index < 256; bus_index++)
     {
         for (int dev_index = 0; dev_index < 32; dev_index++)

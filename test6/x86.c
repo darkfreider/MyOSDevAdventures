@@ -37,6 +37,24 @@ outl(uint16_t port, uint32_t data)
     __asm__ volatile("out %0, %1" : : "a" (data), "d" (port));
 }
 
+void
+insl(int port, void *addr, int cnt)
+{
+  __asm__ volatile("cld; rep insl" :
+               "=D" (addr), "=c" (cnt) :
+               "d" (port), "0" (addr), "1" (cnt) :
+               "memory", "cc");
+}
+
+void
+stosb(void *addr, int data, int cnt)
+{
+  __asm__ volatile("cld; rep stosb" :
+               "=D" (addr), "=c" (cnt) :
+               "0" (addr), "1" (cnt), "a" (data) :
+               "memory", "cc");
+}
+
 uint32_t 
 reade_flags(void)
 {

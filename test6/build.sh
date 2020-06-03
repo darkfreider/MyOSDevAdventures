@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # build all the helper programs that we'll need to create os
-sh ./build_tools.sh
+
+# Build make_img programm that will concatinate bootloader (boot.bin) and
+# my C kernel (kmain)
+gcc -std=c99 -o make_img make_img.c
 
 # assemble and compile kernel and bootloader
 nasm boot.asm -f bin -o boot.bin
