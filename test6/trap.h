@@ -66,13 +66,6 @@ void init_interrupt_gate_entry(Interrupt_gate *, uint32_t, uint16_t);
 void trap_init(void);
 void trap(Trap_frame *);
 
-
-
-inline void trap_static_asserts(void)
-{
-    static_assert(sizeof(Interrupt_gate) == 8);
-}
-
 #endif
 
 

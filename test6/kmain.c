@@ -144,7 +144,6 @@ Module modules_table[32];
 void
 print_modules(void)
 {
-    read_sector(modules_table, 1);
 
     for (uint32_t i = 0; i < modules_table[0].index; i++)
     {
@@ -155,6 +154,9 @@ print_modules(void)
 void 
 shell(void)
 {
+    read_sector(modules_table, 1); 
+    load_and_execute(modules_table[1].index);
+
     char str[64];
     for (;;)
     {

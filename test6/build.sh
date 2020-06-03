@@ -2,6 +2,10 @@
 
 # build all the helper programs that we'll need to create os
 
+pushd ./modules/ >/dev/null
+bash build_modules.sh
+popd >/dev/null
+
 # Build make_img programm that will concatinate bootloader (boot.bin) and
 # my C kernel (kmain)
 gcc -std=c99 -o make_img make_img.c

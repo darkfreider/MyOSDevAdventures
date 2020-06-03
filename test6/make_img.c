@@ -46,11 +46,12 @@ char *modules[] = {
 };
 
 Module g_meta_block[SECTOR_SIZE / sizeof(Module)] = {};
-void init_meta_block(void)
+void init_meta_block(FILE *disk_img, size_t sector_offs)
 {
     chdir("./modules/");
 
-    g_meta_block[0].index = array_count(modules);
+    g_meta_block[0].index = 0;
+    
 
     for (int i = 0; i < array_count(modules); i++)
     {
@@ -58,11 +59,21 @@ void init_meta_block(void)
 	FILE *m = fopen(modules[i], "rb");
         
 	if (m && (len < 12))
-        {
-            strcpy(g_meta_block[i + 1].name, modules[i]);
-	    g_meta_block[i + 1].index = 0;
+        { 
+	    off_t alloc_size = ALIGN_UP(fsize(modules[i]), SECTOR_SIZE);
+	    size_t size_in_sectors = alloc_size / SECTOR_SIZE;
 
+            char *file_mem = (char *)malloc(alloc_size);
+            fread(file_mem, fsize(modules[i]), 1, m);
+	    fwrite(file_mem, alloc_size, 1, disk_img);
+
+	    free(file_mem);
 	    fclose(m);
+            
+	    strcpy(g_meta_block[i + 1].name, modules[i]);
+	    g_meta_block[i + 1].index = sector_offs;
+
+            sector_offs += size_in_sectors; 
 	}
         else
 	{
@@ -70,6 +81,7 @@ void init_meta_block(void)
 	}	
     }
 
+    g_meta_block[0].index = array_count(modules);
     chdir("../");
 }
 
@@ -79,7 +91,7 @@ int main(void)
     FILE *kmain      = fopen("kmain", "rb");    
     FILE *disk_image = fopen("disk_image.img", "wb");
 
-    init_meta_block();
+   
     
     static char bootloader[SECTOR_SIZE];
     fread(bootloader, SECTOR_SIZE, 1, boot_bin);
@@ -89,9 +101,13 @@ int main(void)
     char *elf_kernel = (char *)malloc(elf_kernel_alloc_size);
     fread(elf_kernel, fsize("kmain"), 1, kmain); 
 
-    fwrite(bootloader, SECTOR_SIZE, 1, disk_image);    
+    fwrite(bootloader, SECTOR_SIZE, 1, disk_image);     
     fwrite(g_meta_block, SECTOR_SIZE, 1, disk_image);
     fwrite(elf_kernel, elf_kernel_alloc_size, 1, disk_image);
+
+    init_meta_block(disk_image, 1 + 1 + (elf_kernel_alloc_size / SECTOR_SIZE));
+    fseek(disk_image, SECTOR_SIZE, SEEK_SET);
+    fwrite(g_meta_block, SECTOR_SIZE, 1, disk_image); 
 
     fclose(disk_image); 
     fclose(kmain);

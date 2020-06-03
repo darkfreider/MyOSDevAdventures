@@ -10,14 +10,15 @@ section .text
 
 global _start
 _start:
-    pushad
-
-    mov esp, stack_top
+    ;pushad
+    ;push esp
+    ;mov esp, stack_top
 
     extern main
     call main
 
-    popad
+    ;popad
+    ;pop esp 
     ret
 
     cli

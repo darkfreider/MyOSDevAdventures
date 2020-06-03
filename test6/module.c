@@ -47,8 +47,7 @@ read_segment(uint8_t *pa, uint32_t count, uint32_t offset)
     // Round down to sector boundary.
     pa -= offset % SECTOR_SIZE;
 
-    // Translate from bytes to sectors; kernel starts at sector 1.
-    offset = (offset / SECTOR_SIZE) + 1;
+    offset = (offset / SECTOR_SIZE);
 
     for(; pa < epa; pa += SECTOR_SIZE, offset++)
         read_sector(pa, offset);
@@ -57,21 +56,24 @@ read_segment(uint8_t *pa, uint32_t count, uint32_t offset)
 uint8_t scratch_space[4096];
 
 int
-load_and_execute(void)
+load_and_execute(uint32_t start_sector)
 {
     struct elfhdr *elf;
     struct proghdr *ph, *eph;
     void (*entry)(void);
     uint8_t *pa;
+    
+    uint32_t start_byte = start_sector * SECTOR_SIZE;
 
-    elf = (struct elfhdr*)scratch_space;  // scratch space
+    elf = (struct elfhdr*)scratch_space; 
 
     // Read 1st page off disk
-    read_segment((uint8_t *)elf, 4096, 0);
+    read_segment((uint8_t *)elf, 4096, start_byte);
 
     // Is this an ELF executable?
     if(elf->magic != ELF_MAGIC)
         return (0);
+
 
     // Load each program segment (ignores ph flags).
     ph = (struct proghdr*)((uint8_t *)elf + elf->phoff);
@@ -79,7 +81,7 @@ load_and_execute(void)
     for(; ph < eph; ph++)
     {
         pa = (uint8_t *)ph->paddr;
-        read_segment(pa, ph->filesz, ph->off);
+        read_segment(pa, ph->filesz, start_byte + ph->off);
         if(ph->memsz > ph->filesz)
             stosb(pa + ph->filesz, 0, ph->memsz - ph->filesz);
     }
