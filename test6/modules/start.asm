@@ -5,20 +5,21 @@ stack_bottom:
     resb (4 * 1024)
 stack_top:
 
+section .data
+os_stack: dd 0
 
 section .text
 
 global _start
 _start:
-    ;pushad
-    ;push esp
-    ;mov esp, stack_top
 
+    mov dword [os_stack], esp
+    mov esp, stack_top
+ 
     extern main
     call main
 
-    ;popad
-    ;pop esp 
+    mov esp, dword [os_stack]
     ret
 
     cli

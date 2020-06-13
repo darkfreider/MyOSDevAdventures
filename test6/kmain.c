@@ -103,6 +103,21 @@ get_char(void)
     return g_input_buf[g_input_buf_next_read++]; 
 }
 
+int
+get_word(char *word, int len)
+{
+    int c;
+    int i = 0;
+
+    while ((c = get_char()) != '\n' && i < (len - 1))
+    {
+        word[i++] = c;
+    }
+    word[i] = '\0';
+
+    return (i);
+}
+
 int 
 get_line(char *str, int len)
 {
@@ -151,32 +166,84 @@ print_modules(void)
     }
 }
 
+void read_word(void)
+{
+    
+}
+
+void run_cmd(void)
+{
+
+}
+
+int is_space(char c)
+{
+    return (c == ' ') || (c == '\n') || (c == '\t'); 
+}
+
 void 
 shell(void)
 {
     read_sector(modules_table, 1); 
-    load_and_execute(modules_table[1].index);
 
     char str[64];
+    char cmd[64];
     for (;;)
     {
         printf("@: ");
-        get_line(str, sizeof(str));
+        
+	uint32_t len = get_line(str, sizeof(str));
+        uint32_t str_index = 0; 
+	uint32_t cmd_index = 0;
 
-	if (str_equal("pci_scan\n", str))
+	if (str[str_index] == '\n') continue;
+        while (str_index < len && is_space(str[str_index]))
+	    str_index++;
+
+        while (str_index < len && cmd_index < 63 && !is_space(str[str_index]))
 	{
-            pci_scan(); 
+            cmd[cmd_index++] = str[str_index++];
 	}
-	else if (str_equal("clear\n", str))
+        cmd[cmd_index] = 0;	
+
+	if (str_equal("pci_scan", cmd))
+	{
+            pci_scan();
+	}
+	else if (str_equal("clear", cmd))
 	{
             vga_clear_screen();
 	}
-	else if (str_equal("run\n", str))
+	else if (str_equal("run", cmd))
 	{
-            print_modules();
+	    while (str_index < len && is_space(str[str_index]))
+                str_index++;
+
+	    if (str_index < len)
+            {
+		uint32_t i = 0;
+	        char module_to_exec[12] = {};
+		while (i < 11 && str_index < len && !is_space(str[str_index]))
+		{
+	            module_to_exec[i++] = str[str_index++];
+		}
+	        module_to_exec[i] = 0;	
+
+                for (uint32_t i = 0; i < modules_table[0].index; i++)
+                {
+		    if (str_equal((const char *)modules_table[i + 1].name, module_to_exec))
+		    {
+		        load_and_execute(modules_table[i + 1].index);
+			break;
+		    }
+                }
+	    }
+	    else
+	    {
+	        print_modules();
+	    }
 	}
-	else
-	    put_str(str);
+
     }
 }
 
