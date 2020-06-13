@@ -42,7 +42,7 @@ typedef struct Module Module;
 char *modules[] = {
 
     "test",
-
+    "rule22",
 };
 
 Module g_meta_block[SECTOR_SIZE / sizeof(Module)] = {};
