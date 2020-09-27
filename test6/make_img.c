@@ -43,6 +43,7 @@ char *modules[] = {
 
     "test",
     "rule22",
+    "tx",
 };
 
 Module g_meta_block[SECTOR_SIZE / sizeof(Module)] = {};

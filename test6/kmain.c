@@ -28,6 +28,10 @@ void runtime_assert(int e, const char *msg)
     }
 }
 
+const char g_logo[] = {
+    "Welcome to Test6\n"
+};
+
 #include "x86.c"
 #include "vga.c"
 #include "trap.c"
@@ -184,6 +188,8 @@ int is_space(char c)
 void 
 shell(void)
 {
+    printf("%s", g_logo);
+
     read_sector(modules_table, 1); 
 
     char str[64];
