@@ -1,0 +1,8 @@
+
+
+*.o
+*.bin
+*.img
+
+kmain
+make_img
