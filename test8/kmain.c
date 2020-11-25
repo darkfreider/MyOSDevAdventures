@@ -23,10 +23,42 @@ void runtime_assert(int e, const char *msg)
     }
 }
 
-
 #include "x86.c"
 #include "vga.c"
 
+typedef struct TCB
+{
+    uint32_t id;
+    uint32_t *stack;
+    void *sp;
+} TCB;
+
+TCB *g_current_tcb;
+
+#define STACK_SIZE (256 / sizeof(uint32_t))
+uint32_t free_stacks[STACK_SIZE][2];
+TCB      free_tcb_array[2];
+int32_t tcb_index = 0;
+
+TCB *
+thread_create(void (*thread_proc)(void *))
+{
+    TCB *result = &free_tcb_array[0];
+   
+    result->id = 1; 
+    result->stack = (uint32_t *)&free_stacks[0][0] + STACK_SIZE; 
+
+    return (result);
+}
+
+void thread_yield(void)
+{
+}
+
+void start_scheduler(void)
+{
+
+}
 
 void 
 kmain(uint32_t magic)
@@ -35,6 +67,17 @@ kmain(uint32_t magic)
     vga_clear_screen();
     
     printf("Hello from kernel!\n");
+
+    TCB *tcb = thread_create(0);
+    printf("tcb addr: %x\n", tcb);
+    printf("stack addr: %x\n", tcb->stack);
+
+#if 0
+    thread_create(thread1);
+    thread_create(thread2);
+
+    start_scheduler();
+#endif
 
     for(;;);
 }
