@@ -18,4 +18,3 @@ i686-elf-gcc -T linker.ld -o kmain -ffreestanding -O0 -nostdlib start.o thread.o
 
 # create disk image to run
 ./make_img
-
