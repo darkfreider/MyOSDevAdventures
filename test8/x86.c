@@ -1,7 +1,7 @@
 
 // Routines to let C code use special x86 instructions.
 
-uint8_t  
+uint8_t
 inb(uint16_t port)
 {
     uint8_t data;
@@ -55,12 +55,12 @@ stosb(void *addr, int data, int cnt)
                "memory", "cc");
 }
 
-uint32_t 
+uint32_t
 reade_flags(void)
 {
     uint32_t eflags;
     __asm__ volatile("pushfl; popl %0" : "=r" (eflags));
-   
+
     return eflags;
 }
 
@@ -78,7 +78,7 @@ load_idt(Interrupt_gate *p, uint16_t size)
 }
 */
 
-void 
+void
 cli(void)
 {
     __asm__ volatile("cli");
@@ -89,9 +89,3 @@ sti(void)
 {
     __asm__ volatile("sti");
 }
-
-
-
-
-
-

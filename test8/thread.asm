@@ -3,7 +3,8 @@ section .bss
 
 section .text
 
-; void thread_init_stack_frame(Thread_proc_t *func_ptr, uint32_t *stack_addr);
+; void thread_init_stack_frame(Thread_proc_t *func_ptr, uint32_t **stack_addr);
+; TODO(max): I belive it can be done in C.
 ; -----------------------
 ; ebp + 12 -> stack_addr
 ; ebp + 8 -> function ptr
@@ -52,8 +53,8 @@ switch:
     pushad
     pushfd
 
-    mov eax, [esp + 4 + (9 * 4)]
-    mov ebx, [esp + 8 + (9 * 4)]
+    mov eax, [esp + (9 + 1) * 4]
+    mov ebx, [esp + (9 + 2) * 4]
 
     mov [eax], esp
     mov esp, [ebx]

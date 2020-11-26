@@ -22,15 +22,12 @@ _start:
     mov esp, kernel_stack_top
 
     extern kmain
-    push 0xaabbccdd 
+    push 0xaabbccdd
     call kmain
 
     cli
-.hang: 
+.hang:
     hlt
     jmp .hang
 
 .end:
-
-
-

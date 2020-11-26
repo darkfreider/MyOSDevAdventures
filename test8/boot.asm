@@ -10,24 +10,24 @@ first_instruction:
 
 align 8
 gdt_start:
-    gdt_null_seg_descr: 
-        dq 0 
-    
+    gdt_null_seg_descr:
+        dq 0
+
     gdt_code_seg_descr:
         .limit_0_15:     dw 0xffff
         .base_0_15:      dw 0
         .base_16_23:     db 0
-        .seg_flags_low:  db 0b10011010 
+        .seg_flags_low:  db 0b10011010
         .seg_flags_high: db 0b11001111
-        .base_24_31:     db 0 
-    
+        .base_24_31:     db 0
+
     gdt_data_seg_descr:
         .limit_0_15:     dw 0xffff
         .base_0_15:      dw 0
         .base_16_23:     db 0
-        .seg_flags_low:  db 0b10010010 
+        .seg_flags_low:  db 0b10010010
         .seg_flags_high: db 0b11001111
-        .base_24_31:     db 0  
+        .base_24_31:     db 0
 gdt_end:
 
 gdt_descr:
@@ -41,7 +41,7 @@ gdt_descr_base_addr: dd gdt_start
 real_mode_start:
     cli
     cld
-    
+
     mov ax, 0
     mov ds, ax
     mov es, ax
@@ -49,16 +49,16 @@ real_mode_start:
     mov sp, 0x7c00
 
     ; NOTE(max): Disabling A20 line (no address wraparound)
-.kbd_wait_0: 
-    in al, PS2_STATUS 
+.kbd_wait_0:
+    in al, PS2_STATUS
     test al, 0x02
     jnz .kbd_wait_0
 
     mov al, 0xd1 ; NOTE(max): write to cntrlr output port
     out PS2_COMMAND, al
 
-.kbd_wait_1: 
-    in al, PS2_STATUS 
+.kbd_wait_1:
+    in al, PS2_STATUS
     test al, 0x02
     jnz .kbd_wait_1
 
@@ -68,7 +68,7 @@ real_mode_start:
     lgdt [gdt_descr]
 
     mov eax, cr0
-    or eax, 0x01 
+    or eax, 0x01
     mov cr0, eax
 
     jmp 0x08:protected_mode_start
@@ -76,10 +76,10 @@ real_mode_start:
 BITS 32
 protected_mode_start:
     mov ax, 0x10
-    mov ds, ax 
+    mov ds, ax
     mov es, ax
     mov ss, ax
-    
+
     xor ax, ax
     mov fs, ax
     mov gs, ax
@@ -111,18 +111,18 @@ protected_mode_start:
     ; pa  edx
     mov dword [DEBUG_sectors_read], 0
     mov ecx, 0x1000
-   
-    mov eax, ecx 
+
+    mov eax, ecx
     add eax, dword [ecx + ELF_PHOFF]
-  
-    movzx ebx, word [ecx + ELF_PHNUM] 
+
+    movzx ebx, word [ecx + ELF_PHNUM]
     shl ebx, LOG2_SIZEOF_PROGHDR
-    add ebx, eax 
+    add ebx, eax
 
 .load_kernel_loop:
     cmp eax, ebx
     jnl .call_kernel_entry
-   
+
     mov edx, dword [eax + PHDR_PADDR]
 
     push dword [eax + PHDR_OFF]
@@ -135,23 +135,23 @@ protected_mode_start:
     mov ecx, dword [eax + PHDR_MEMSZ]
     cmp ecx, dword [eax + PHDR_FILESZ]
     jng .l1
-    
+
     mov edi, edx
     add edi, dword [eax + PHDR_FILESZ]
     sub ecx, dword [eax + PHDR_FILESZ]
-    
+
     push eax
-    xor eax, eax   
-    rep stosb 
-    pop eax 
- 
-.l1: 
+    xor eax, eax
+    rep stosb
+    pop eax
+
+.l1:
     add eax, SIZEOF_PROGHDR
     jmp .load_kernel_loop
 
 .call_kernel_entry:
     mov eax, dword [0x1000 + ELF_ENTRY]
-    jmp eax 
+    jmp eax
 
 .hang:
     jmp .hang
@@ -207,21 +207,21 @@ read_sector:
     pop eax
 
     mov dx, IDE_STATUS
-.wait_disk_0: 
+.wait_disk_0:
     in al, dx
     and al, 0xc0
-    cmp al, 0x40 
-    jne .wait_disk_0 
+    cmp al, 0x40
+    jne .wait_disk_0
 
     mov dx, IDE_SECTOR_COUNT
-    mov al, 1 
+    mov al, 1
     out dx, al
 
     mov dx, IDE_SECTOR_NUM
-    mov eax, dword [ebp + 12] 
+    mov eax, dword [ebp + 12]
     out dx, al
 
-    mov dx, IDE_CYLINDER_LOW 
+    mov dx, IDE_CYLINDER_LOW
     mov eax, dword [ebp + 12]
     shr eax, 8
     out dx, al
@@ -242,10 +242,10 @@ read_sector:
     out dx, al
 
     mov dx, IDE_STATUS
-.wait_disk_1: 
+.wait_disk_1:
     in al, dx
     and al, 0xc0
-    cmp al, 0x40 
+    cmp al, 0x40
     jne .wait_disk_1
 
     ; TODO(max): maybe replace loop with a single instruction (rep stosw)
@@ -265,12 +265,12 @@ read_sector:
     ret
 
 
-; void read_segment(uchar *phys_addr, uint num_of_bytes, uint offset) 
+; void read_segment(uchar *phys_addr, uint num_of_bytes, uint offset)
 ;     * some documentation
 ; Stack:
 ;     ebp + 16 -> offset
-;     ebp + 12 -> num_of_bytes 
-;     ebp + 8  -> phys_addr 
+;     ebp + 12 -> num_of_bytes
+;     ebp + 8  -> phys_addr
 ;     ebp + 4  -> return_addr
 ;     ebp      -> old_ebp
 ;
@@ -282,22 +282,22 @@ read_segment:
     push ebx
     push ecx
     push edx
- 
+
     ; phys_addr     -> eax
     ; end_phys_addr -> ebx
-    ; offset        -> ecx 
+    ; offset        -> ecx
     mov eax, [ebp + 8]
-    
+
     ; IMPORTANT(max): assert(SECTOR_SIZE is a power of 2)
     ; x % y = x & (y - 1)
-    ; Round down phys_addr to a sector boundary 
+    ; Round down phys_addr to a sector boundary
     mov edx, [ebp + 16]
     and edx, (SECTOR_SIZE - 1)
-    sub eax, edx 
+    sub eax, edx
 
     ; translate offset in bytes to offset in sectors
     mov ecx, [ebp + 16]
-    shr ecx, LOG2_SECTOR_SIZE 
+    shr ecx, LOG2_SECTOR_SIZE
     ;inc ecx
     add ecx, 2
 
@@ -307,7 +307,7 @@ read_segment:
 .load_sectors:
     cmp eax, ebx
     jge .done
-    
+
     push ecx
     push eax
     call read_sector
@@ -317,11 +317,11 @@ read_segment:
     inc ecx
     jmp .load_sectors
 
-.done: 
+.done:
     pop edx
     pop ecx
     pop ebx
-    pop eax 
+    pop eax
     pop ebp
     ret
 
@@ -329,12 +329,3 @@ read_segment:
 times 506 - ($-$$) db 0
 mata_block_start: dd 0
 dw 0xaa55
-
-
-
-
-
-
-
-
-
